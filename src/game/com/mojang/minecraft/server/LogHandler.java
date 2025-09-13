@@ -5,7 +5,7 @@ import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 import java.util.logging.StreamHandler;
 
-public final class LogHandler extends StreamHandler {
+final class LogHandler extends StreamHandler {
 	LogHandler(OutputStream var1, Formatter var2) {
 		super(var1, var2);
 	}
