@@ -79,7 +79,7 @@ public final class PlayerInstance {
 						        int z = ((Short)var2[2]).shortValue();
 						        int block = this.minecraft.level.getTile(x, y, z);
 						        this.connection.sendPacket(Packet.SET_TILE, new Object[]{x, y, z, block});
-						        this.sendChatMessage("You need to log in to break/place blocks!");
+						        this.sendChatMessage("You must to log in to break/place blocks!");
 						        return;
 							} else {
 								if(this.placedBlocks.size() > 400) {
@@ -357,16 +357,6 @@ public final class PlayerInstance {
 
 			this.connection.sendPacket(Packet.LEVEL_FINALIZE, new Object[]{Integer.valueOf(var11.width), Integer.valueOf(var11.depth), Integer.valueOf(var11.height)});
 			this.connection.sendPacket(Packet.PLAYER_JOIN, new Object[]{Integer.valueOf(-1), this.name, Integer.valueOf(this.x), Integer.valueOf(this.y), Integer.valueOf(this.z), Integer.valueOf(this.yaw), Integer.valueOf(this.pitch)});
-			this.minecraft.sendPlayerPacket(this, Packet.PLAYER_JOIN, new Object[]{Integer.valueOf(this.playerID), this.name, Integer.valueOf((var11.xSpawn << 5) + 16), Integer.valueOf((var11.ySpawn << 5) + 16), Integer.valueOf((var11.zSpawn << 5) + 16), Integer.valueOf((int)(var11.rotSpawn * 256.0F / 360.0F)), Integer.valueOf(0)});
-			this.minecraft.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), this.name + " joined the game"});
-			Iterator var19 = this.minecraft.getPlayerList().iterator();
-
-			while(var19.hasNext()) {
-				PlayerInstance var12 = (PlayerInstance)var19.next();
-				if(var12 != null && var12 != this && var12.onlyIP) {
-					this.connection.sendPacket(Packet.PLAYER_JOIN, new Object[]{Integer.valueOf(var12.playerID), var12.name, Integer.valueOf(var12.x), Integer.valueOf(var12.y), Integer.valueOf(var12.z), Integer.valueOf(var12.yaw), Integer.valueOf(var12.pitch)});
-				}
-			}
 
 			this.sendingPackets = true;
 			var18 = 0;
