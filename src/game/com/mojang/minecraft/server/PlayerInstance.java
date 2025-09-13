@@ -5,17 +5,22 @@ import com.mojang.minecraft.User;
 import com.mojang.minecraft.level.Level;
 import com.mojang.minecraft.level.tile.Tile;
 import com.mojang.minecraft.net.Packet;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import dev.colbster937.scuffed.ScuffedServer;
+import dev.colbster937.scuffed.ScuffedUtils;
+import dev.colbster937.scuffed.LoginReminder;
+
 public final class PlayerInstance {
 	private static Logger logger = MinecraftServer.logger;
 	public final SocketConnection connection;
-	private final MinecraftServer minecraft;
-	private boolean onlyIP = false;
+	public final MinecraftServer minecraft;
+	public boolean onlyIP = false;
 	private boolean sendingPackets = false;
 	public String name = "";
 	public final int playerID;
@@ -33,6 +38,10 @@ public final class PlayerInstance {
 	private int ticks = 0;
 	private volatile byte[] blocks = null;
 
+	private LoginReminder loginReminder;
+	public boolean loggedIn = false;
+	public boolean registered = false;
+
 	public PlayerInstance(MinecraftServer var1, SocketConnection var2, int var3) {
 		this.minecraft = var1;
 		this.connection = var2;
@@ -45,6 +54,7 @@ public final class PlayerInstance {
 		this.z = (var4.zSpawn << 5) + 16;
 		this.yaw = (int)(var4.rotSpawn * 256.0F / 360.0F);
 		this.pitch = 0;
+		this.loginReminder = new LoginReminder(this);
 	}
 
 	public final String toString() {
@@ -107,7 +117,7 @@ public final class PlayerInstance {
 				} else {
 					PlayerInstance var11 = this.minecraft.getPlayerByName(var3);
 					if(var11 != null) {
-						var11.kick("You logged in from another computer.");
+						this.kick(var11.name + " is already playing on this server!");
 					}
 
 					logger.info(this + " logged in as " + var3);
@@ -125,36 +135,42 @@ public final class PlayerInstance {
 						this.minecraft.players.addPlayer(var3);
 					}
 				}
+				File file = new File("users", this.name + ".txt");
+				if (file.exists()) {
+				    this.registered = true;
+				}
 			}
 		}
 	}
 
 	private void chatMessage(String var1) {
-		var1 = var1.trim();
-		this.chatCounter += var1.length() + 15 << 2;
-		if(this.chatCounter > 600) {
-			this.chatCounter = 760;
-			this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "Too much chatter! Muted for eight seconds."});
-			logger.info("Muting " + this.name + " for chatting too much");
-		} else {
-			char[] var2 = var1.toCharArray();
-
-			for(int var3 = 0; var3 < var2.length; ++var3) {
-				if(var2[var3] < 32 || var2[var3] > 127) {
-					this.kickCheat("Bad chat message!");
-					return;
-				}
-			}
-
-			if(var1.startsWith("/")) {
-				if(this.minecraft.admins.containsPlayer(this.name)) {
-					this.minecraft.parseCommand(this, var1.substring(1));
-				} else {
-					this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "You\'re not a server admin!"});
-				}
+		if (ScuffedServer.chatLoggedIn(this, var1)) {
+			var1 = var1.trim();
+			this.chatCounter += var1.length() + 15 << 2;
+			if(this.chatCounter > 600) {
+				this.chatCounter = 760;
+				this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "Too much chatter! Muted for eight seconds."});
+				logger.info("Muting " + this.name + " for chatting too much");
 			} else {
-				logger.info(this.name + " says: " + var1);
-				this.minecraft.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(this.playerID), this.name + ": " + var1});
+				char[] var2 = var1.toCharArray();
+
+				for(int var3 = 0; var3 < var2.length; ++var3) {
+					if(var2[var3] < 32 || var2[var3] > 127) {
+						this.kickCheat("Bad chat message!");
+						return;
+					}
+				}
+
+				if(var1.startsWith("/")) {
+					if(this.minecraft.admins.containsPlayer(this.name) || ScuffedUtils.isLoginCommand(var1)) {
+						this.minecraft.parseCommand(this, var1.substring(1));
+					} else {
+						this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "You\'re not a server admin!"});
+					}
+				} else {
+					logger.info(this.name + " says: " + var1);
+					this.minecraft.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(this.playerID), this.name + ": " + var1});
+				}
 			}
 		}
 	}
@@ -240,7 +256,7 @@ public final class PlayerInstance {
 								}
 							}
 
-							if(!var22) {
+							if(!var22 && this.minecraft.scuffedServer.antiCheat) {
 								this.kickCheat("Tile type");
 							} else if(var13 >= 0 && var3 >= 0 && var4 >= 0 && var13 < var20.width && var3 < var20.depth && var4 < var20.height) {
 								if(var5 == 0) {
@@ -309,6 +325,13 @@ public final class PlayerInstance {
 						var26 = var7;
 					}
 				}
+			}
+
+			loginReminder.remindLogin();
+
+			if (!this.loggedIn && System.currentTimeMillis() - this.currentTime > ((long) this.loginReminder.timeout * 1000L)) {
+			    this.kick("You must log in within " + this.loginReminder.timeout + " seconds!");
+			    return;
 			}
 		}
 
@@ -379,7 +402,7 @@ public final class PlayerInstance {
 			var1.printStackTrace();
 		}
 
-		this.minecraft.sendPlayerPacket(this, Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), this.name + " left the game"});
+		this.minecraft.scuffedServer.sendPlayerPacketLoggedIn(this, Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), this.name + " left the game"});
 		MinecraftServer.shutdown(this);
 	}
 }

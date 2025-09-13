@@ -106,7 +106,7 @@ public class ScuffedServer {
                 player.sendChatMessage("Failed to register. Try again.");
             }
             return true;
-        } else if (command[0].toLowerCase().equals("login")) {
+        } else if (command[0].toLowerCase().equals("login") || command[0].toLowerCase().equals("l")) {
             if (player.loggedIn) {
                 player.sendChatMessage("You are already logged in.");
                 return true;
@@ -162,6 +162,15 @@ public class ScuffedServer {
                                 Integer.valueOf(playerInstance.pitch) });
             }
         }
+    }
+
+    public static boolean chatLoggedIn(PlayerInstance player, String message) {
+		if (!player.loggedIn && !ScuffedUtils.isLoginCommand(message)) {
+		    player.sendChatMessage("You need to log in first to chat!");
+            return false;
+        }
+
+        return true;
     }
 
     public void sendPlayerPacketLoggedIn(PlayerInstance player, Packet packet, Object... data) {
