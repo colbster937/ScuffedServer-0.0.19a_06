@@ -79,7 +79,7 @@ public final class PlayerInstance {
 						        int z = ((Short)var2[2]).shortValue();
 						        int block = this.minecraft.level.getTile(x, y, z);
 						        this.connection.sendPacket(Packet.SET_TILE, new Object[]{x, y, z, block});
-						        this.sendChatMessage("You must to log in to break/place blocks!");
+						        this.sendChatMessage("You must log in to break/place blocks!");
 						        return;
 							} else {
 								if(this.placedBlocks.size() > 400) {

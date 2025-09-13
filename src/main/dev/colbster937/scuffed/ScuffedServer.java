@@ -165,7 +165,7 @@ public class ScuffedServer {
 
     public static boolean chatLoggedIn(PlayerInstance player, String message) {
 		if (!player.scuffedPlayer.loggedIn && ScuffedUtils.isLoginCommand(message) == 0) {
-		    player.sendChatMessage("You must to log in to chat!");
+		    player.sendChatMessage("You must log in to chat!");
             return false;
         }
 
