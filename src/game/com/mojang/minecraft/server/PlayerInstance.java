@@ -73,10 +73,20 @@ public final class PlayerInstance {
 				if(var1 != Packet.TIMED_OUT) {
 					if(this.onlyIP && this.sendingPackets) {
 						if(var1 == Packet.PLACE_OR_REMOVE_TILE) {
-							if(this.placedBlocks.size() > 400) {
-								this.kickCheat("Too much lag");
+							if (!this.scuffedPlayer.loggedIn) {
+						        int x = ((Short)var2[0]).shortValue();
+						        int y = ((Short)var2[1]).shortValue();
+						        int z = ((Short)var2[2]).shortValue();
+						        int block = this.minecraft.level.getTile(x, y, z);
+						        this.connection.sendPacket(Packet.SET_TILE, new Object[]{x, y, z, block});
+						        this.sendChatMessage("You need to log in to break/place blocks!");
+						        return;
 							} else {
-								this.placedBlocks.add(var2);
+								if(this.placedBlocks.size() > 400) {
+									this.kickCheat("Too much lag");
+								} else {
+									this.placedBlocks.add(var2);
+								}
 							}
 						} else if(var1 == Packet.CHAT_MESSAGE) {
 							String var7 = var2[1].toString().trim();
