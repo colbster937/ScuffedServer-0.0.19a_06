@@ -1,5 +1,9 @@
 package dev.colbster937.scuffed;
 
+import java.io.File;
+
+import com.mojang.minecraft.server.PlayerInstance;
+
 public class ScuffedUtils {
     public static String formatEnabledDisabled(boolean value) {
         return value ? "ENABLED" : "DISABLED";
@@ -17,7 +21,9 @@ public class ScuffedUtils {
     public static boolean isRegistered(PlayerInstance player) {
         File file = new File("users", player.name + ".txt");
         if (file.exists()) {
-            player.scuffedPlayer.registered = true;
+            return true;
+        } else {
+            return false;
         }
     }
 }

@@ -38,7 +38,7 @@ public final class PlayerInstance {
 	private int ticks = 0;
 	private volatile byte[] blocks = null;
 
-	private ScuffedPlayer scuffedPlayer;
+	public ScuffedPlayer scuffedPlayer;
 
 	public PlayerInstance(MinecraftServer var1, SocketConnection var2, int var3) {
 		this.minecraft = var1;
@@ -52,7 +52,7 @@ public final class PlayerInstance {
 		this.z = (var4.zSpawn << 5) + 16;
 		this.yaw = (int)(var4.rotSpawn * 256.0F / 360.0F);
 		this.pitch = 0;
-		this.loginReminder = new LoginReminder(this);
+		this.scuffedPlayer = new ScuffedPlayer(this);
 	}
 
 	public final String toString() {

@@ -18,7 +18,7 @@ public class ScuffedPlayer {
         this.loginRemindTime = System.currentTimeMillis();
         this.loginTimeout = player.minecraft.scuffedServer.loginTimeout;
         this.loggedIn = false;
-        this.registered = ScuffedUtils.isRegistered(this.player.name);
+        this.registered = ScuffedUtils.isRegistered(this.player);
     }
 
     public void remindLogin() {
@@ -39,7 +39,7 @@ public class ScuffedPlayer {
         this.remindLogin();
 
         if (!this.loggedIn && System.currentTimeMillis() - this.initTime > ((long) this.loginTimeout * 1000L)) {
-            this.kick("You must log in within " + this.loginTimeout + " seconds!");
+            this.player.kick("You must log in within " + this.loginTimeout + " seconds!");
             return;
         }
     }
