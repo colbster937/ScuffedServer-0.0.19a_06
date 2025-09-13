@@ -13,4 +13,11 @@ public class ScuffedUtils {
     public static boolean isLoginCommand(String commandSring) {
         return ScuffedUtils.isCommand(commandSring, "/l") || ScuffedUtils.isCommand(commandSring, "/reg") || ScuffedUtils.isCommand(commandSring, "/login") || ScuffedUtils.isCommand(commandSring, "/register");
     }
+
+    public static boolean isRegistered(PlayerInstance player) {
+        File file = new File("users", player.name + ".txt");
+        if (file.exists()) {
+            player.scuffedPlayer.registered = true;
+        }
+    }
 }

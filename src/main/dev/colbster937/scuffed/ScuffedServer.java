@@ -82,7 +82,7 @@ public class ScuffedServer {
     public boolean parseCommand(PlayerInstance player, String commandString) {
         String[] command = commandString.split(" ");
         if (command[0].toLowerCase().equals("register") || command[0].toLowerCase().equals("reg")) {
-            if (player.registered) {
+            if (player.scuffedPlayer.registered) {
                 player.sendChatMessage("You are already registered! Use /login.");
                 return true;
             }
@@ -100,14 +100,14 @@ public class ScuffedServer {
                 file.getParentFile().mkdirs();
                 Files.write(file.toPath(), hash.getBytes());
                 player.sendChatMessage("Successfully Registered!");
-                player.registered = true;
+                player.scuffedPlayer.registered = true;
                 this.login(player, true);
             } catch (Exception e) {
                 player.sendChatMessage("Failed to register. Try again.");
             }
             return true;
         } else if (command[0].toLowerCase().equals("login") || command[0].toLowerCase().equals("l")) {
-            if (player.loggedIn) {
+            if (player.scuffedPlayer.loggedIn) {
                 player.sendChatMessage("You are already logged in.");
                 return true;
             }
@@ -137,7 +137,7 @@ public class ScuffedServer {
     }
 
     public void login(PlayerInstance player, boolean alert) {
-        player.loggedIn = true;
+        player.scuffedPlayer.loggedIn = true;
         if (alert) player.sendChatMessage("Login successful! You can now play.");
         this.server.sendPacket(Packet.CHAT_MESSAGE,
                 new Object[] { Integer.valueOf(-1), player.name + " joined the game" });
@@ -165,7 +165,7 @@ public class ScuffedServer {
     }
 
     public static boolean chatLoggedIn(PlayerInstance player, String message) {
-		if (!player.loggedIn && !ScuffedUtils.isLoginCommand(message)) {
+		if (!player.scuffedPlayer.loggedIn && !ScuffedUtils.isLoginCommand(message)) {
 		    player.sendChatMessage("You need to log in first to chat!");
             return false;
         }
@@ -174,6 +174,6 @@ public class ScuffedServer {
     }
 
     public void sendPlayerPacketLoggedIn(PlayerInstance player, Packet packet, Object... data) {
-        if (player.loggedIn) player.minecraft.sendPlayerPacket(player, packet, data);
+        if (player.scuffedPlayer.loggedIn) player.minecraft.sendPlayerPacket(player, packet, data);
     }
 }

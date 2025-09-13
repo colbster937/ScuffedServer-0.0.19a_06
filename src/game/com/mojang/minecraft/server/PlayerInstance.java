@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 
 import dev.colbster937.scuffed.ScuffedServer;
 import dev.colbster937.scuffed.ScuffedUtils;
-import dev.colbster937.scuffed.LoginReminder;
+import dev.colbster937.scuffed.ScuffedPlayer;
 
 public final class PlayerInstance {
 	private static Logger logger = MinecraftServer.logger;
@@ -38,9 +38,7 @@ public final class PlayerInstance {
 	private int ticks = 0;
 	private volatile byte[] blocks = null;
 
-	private LoginReminder loginReminder;
-	public boolean loggedIn = false;
-	public boolean registered = false;
+	private ScuffedPlayer scuffedPlayer;
 
 	public PlayerInstance(MinecraftServer var1, SocketConnection var2, int var3) {
 		this.minecraft = var1;
@@ -135,10 +133,6 @@ public final class PlayerInstance {
 						this.minecraft.players.addPlayer(var3);
 					}
 				}
-				File file = new File("users", this.name + ".txt");
-				if (file.exists()) {
-				    this.registered = true;
-				}
 			}
 		}
 	}
@@ -195,6 +189,7 @@ public final class PlayerInstance {
 	}
 
 	public final void handlePackets() {
+		this.scuffedPlayer.tick();
 		if(this.packetHandlingCounter >= 2) {
 			this.packetHandlingCounter -= 2;
 		}
@@ -325,13 +320,6 @@ public final class PlayerInstance {
 						var26 = var7;
 					}
 				}
-			}
-
-			loginReminder.remindLogin();
-
-			if (!this.loggedIn && System.currentTimeMillis() - this.currentTime > ((long) this.loginReminder.timeout * 1000L)) {
-			    this.kick("You must log in within " + this.loginReminder.timeout + " seconds!");
-			    return;
 			}
 		}
 
