@@ -33,6 +33,8 @@ public class Level implements Serializable {
 	int unprocessed = 0;
 	private int tickCount = 0;
 
+	public static boolean liquidFlow = true;
+
 	public void initTransient() {
 		if(this.blocks == null) {
 			throw new RuntimeException("The level is corrupt!");

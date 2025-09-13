@@ -11,11 +11,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import dev.colbster937.scuffed.LoginReminder;
+
 public final class PlayerInstance {
 	private static Logger logger = MinecraftServer.logger;
 	public final SocketConnection connection;
-	private final MinecraftServer minecraft;
-	private boolean onlyIP = false;
+	public final MinecraftServer minecraft;
+	public boolean onlyIP = false;
 	private boolean sendingPackets = false;
 	public String name = "";
 	public final int playerID;
@@ -33,6 +35,10 @@ public final class PlayerInstance {
 	private int ticks = 0;
 	private volatile byte[] blocks = null;
 
+	private LoginReminder loginReminder;
+	public boolean loggedIn = false;
+	public boolean registered = false;
+
 	public PlayerInstance(MinecraftServer var1, SocketConnection var2, int var3) {
 		this.minecraft = var1;
 		this.connection = var2;
@@ -45,6 +51,7 @@ public final class PlayerInstance {
 		this.z = (var4.zSpawn << 5) + 16;
 		this.yaw = (int)(var4.rotSpawn * 256.0F / 360.0F);
 		this.pitch = 0;
+		this.loginReminder = new LoginReminder(this);
 	}
 
 	public final String toString() {
@@ -107,7 +114,7 @@ public final class PlayerInstance {
 				} else {
 					PlayerInstance var11 = this.minecraft.getPlayerByName(var3);
 					if(var11 != null) {
-						var11.kick("You logged in from another computer.");
+						this.kick(var11.name + " is already playing on this server!");
 					}
 
 					logger.info(this + " logged in as " + var3);
@@ -232,9 +239,11 @@ public final class PlayerInstance {
 						} else {
 							boolean var22 = false;
 
-							for(var9 = 0; var9 < User.creativeTiles.length && !var22; ++var9) {
-								if(User.creativeTiles[var9] == var6) {
-									var22 = true;
+							if (this.minecraft.scuffedServer.antiCheat) {
+								for(var9 = 0; var9 < User.creativeTiles.length && !var22; ++var9) {
+									if(User.creativeTiles[var9] == var6) {
+										var22 = true;
+									}
 								}
 							}
 
@@ -308,6 +317,13 @@ public final class PlayerInstance {
 					}
 				}
 			}
+
+			loginReminder.remindLogin();
+
+			if (!this.loggedIn && System.currentTimeMillis() - this.currentTime > ((long) this.loginReminder.timeout * 1000L)) {
+			    this.kick("You must log in within " + this.loginReminder.timeout + " seconds!");
+			    return;
+			}
 		}
 
 		if(!this.onlyIP && System.currentTimeMillis() - this.currentTime > 5000L) {
@@ -377,7 +393,7 @@ public final class PlayerInstance {
 			var1.printStackTrace();
 		}
 
-		this.minecraft.sendPlayerPacket(this, Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), this.name + " left the game"});
+		this.minecraft.scuffedServer.sendPlayerPacketLoggedIn(this, Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), this.name + " left the game"});
 		MinecraftServer.shutdown(this);
 	}
 }

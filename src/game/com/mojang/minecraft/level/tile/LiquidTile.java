@@ -27,6 +27,10 @@ public class LiquidTile extends Tile {
 	}
 
 	public void tick(Level var1, int var2, int var3, int var4, Random var5) {
+		if (!Level.liquidFlow) {
+			var1.setTileNoUpdate(var2, var3, var4, this.calmTileId);
+			return;
+		}
 		boolean var7 = false;
 		var4 = var4;
 		var3 = var3;

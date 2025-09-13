@@ -27,14 +27,16 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
+import dev.colbster937.scuffed.ScuffedServer;
+
 public class MinecraftServer implements Runnable {
-	static Logger logger = Logger.getLogger("MinecraftServer");
+	public static Logger logger = Logger.getLogger("MinecraftServer");
 	static DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
 	private ConnectionList connectionList;
 	private Map playerInstancesMap = new HashMap();
 	private List playerList = new ArrayList();
 	private List sendTimers = new ArrayList();
-	private int maxPlayers;
+	public int maxPlayers;
 	private Properties properties = new Properties();
 	public Level level;
 	private boolean isPublic = false;
@@ -51,7 +53,8 @@ public class MinecraftServer implements Runnable {
 	private String serverURL = "";
 	public MPPassCalculator mpPassCalculator = new MPPassCalculator(this.salt);
 	public boolean verifyNames = false;
-	private int maxConnectCount;
+	public int maxConnectCount;
+	public ScuffedServer scuffedServer;
 
 	public MinecraftServer() throws IOException {
 		try {
@@ -97,6 +100,8 @@ public class MinecraftServer implements Runnable {
 		this.playerInstances = new PlayerInstance[this.maxPlayers];
 		this.connectionList = new ConnectionList(this.port, this);
 		(new ConsoleInput(this)).start();
+
+		this.scuffedServer = new ScuffedServer(this);
 	}
 
 	public final void disconnect(SocketConnection var1) {
@@ -189,8 +194,6 @@ public class MinecraftServer implements Runnable {
 						var9.put("port", Integer.valueOf(this.port));
 						var9.put("salt", this.salt);
 						var9.put("version", Byte.valueOf((byte)5));
-						String var12 = assembleHeartbeat(var9);
-						(new HeartbeatThread(this, var12)).start();
 					}
 				}
 
@@ -204,25 +207,6 @@ public class MinecraftServer implements Runnable {
 		} catch (Exception var11) {
 			logger.log(java.util.logging.Level.SEVERE, "Error in main loop, server shutting down!", var11);
 			var11.printStackTrace();
-		}
-	}
-
-	private static String assembleHeartbeat(Map var0) {
-		try {
-			String var1 = "";
-
-			String var3;
-			for(Iterator var2 = var0.keySet().iterator(); var2.hasNext(); var1 = var1 + var3 + "=" + URLEncoder.encode(var0.get(var3).toString(), "UTF-8")) {
-				var3 = (String)var2.next();
-				if(var1 != "") {
-					var1 = var1 + "&";
-				}
-			}
-
-			return var1;
-		} catch (Exception var4) {
-			var4.printStackTrace();
-			throw new RuntimeException("Failed to assemble heartbeat! This is pretty fatal");
 		}
 	}
 
@@ -416,49 +400,50 @@ public class MinecraftServer implements Runnable {
 	}
 
 	public final void parseCommand(PlayerInstance var1, String var2) {
-		logger.info((var1 == null ? "[console]" : var1.name) + " admins: " + var2);
-		String[] var3 = var2.split(" ");
-		if(var3[0].toLowerCase().equals("ban") && var3.length > 1) {
-			this.ban(var3[1]);
-		} else if(var3[0].toLowerCase().equals("kick") && var3.length > 1) {
-			this.kick(var3[1]);
-		} else if(var3[0].toLowerCase().equals("banip") && var3.length > 1) {
-			this.banip(var3[1]);
-		} else if(var3[0].toLowerCase().equals("unban") && var3.length > 1) {
-			String var5 = var3[1];
-			this.banned.removePlayer(var5);
-		} else if(var3[0].toLowerCase().equals("op") && var3.length > 1) {
-			this.op(var3[1]);
-		} else if(var3[0].toLowerCase().equals("deop") && var3.length > 1) {
-			this.deop(var3[1]);
-		} else if(var3[0].toLowerCase().equals("setspawn")) {
-			if(var1 != null) {
-				this.level.setSpawnPos(var1.x / 32, var1.y / 32, var1.z / 32, (float)(var1.yaw * 320 / 256));
+		if (!this.scuffedServer.parseCommand(var1, var2)) {
+			String[] var3 = var2.split(" ");
+			if(var3[0].toLowerCase().equals("ban") && var3.length > 1) {
+				this.ban(var3[1]);
+			} else if(var3[0].toLowerCase().equals("kick") && var3.length > 1) {
+				this.kick(var3[1]);
+			} else if(var3[0].toLowerCase().equals("banip") && var3.length > 1) {
+				this.banip(var3[1]);
+			} else if(var3[0].toLowerCase().equals("unban") && var3.length > 1) {
+				String var5 = var3[1];
+				this.banned.removePlayer(var5);
+			} else if(var3[0].toLowerCase().equals("op") && var3.length > 1) {
+				this.op(var3[1]);
+			} else if(var3[0].toLowerCase().equals("deop") && var3.length > 1) {
+				this.deop(var3[1]);
+			} else if(var3[0].toLowerCase().equals("setspawn")) {
+				if(var1 != null) {
+					this.level.setSpawnPos(var1.x / 32, var1.y / 32, var1.z / 32, (float)(var1.yaw * 320 / 256));
+				} else {
+					logger.info("Can\'t set spawn from console!");
+				}
+			} else if(var3[0].toLowerCase().equals("broadcast") && var3.length > 1) {
+				this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), var2.substring("broadcast ".length()).trim()});
+			} else if(var3[0].toLowerCase().equals("say") && var3.length > 1) {
+				this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), var2.substring("say ".length()).trim()});
 			} else {
-				logger.info("Can\'t set spawn from console!");
-			}
-		} else if(var3[0].toLowerCase().equals("broadcast") && var3.length > 1) {
-			this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), var2.substring("broadcast ".length()).trim()});
-		} else if(var3[0].toLowerCase().equals("say") && var3.length > 1) {
-			this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), var2.substring("say ".length()).trim()});
-		} else {
-			if(var3[0].toLowerCase().equals("teleport") && var3.length > 1) {
-				if(var1 == null) {
-					logger.info("Can\'t teleport from console!");
-					return;
+				if(var3[0].toLowerCase().equals("teleport") && var3.length > 1) {
+					if(var1 == null) {
+						logger.info("Can\'t teleport from console!");
+						return;
+					}
+
+					PlayerInstance var4 = this.getPlayerByName(var3[1]);
+					if(var4 == null) {
+						var1.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "No such player"});
+						return;
+					}
+
+					var1.connection.sendPacket(Packet.PLAYER_TELEPORT, new Object[]{Integer.valueOf(-1), Integer.valueOf(var4.x), Integer.valueOf(var4.y), Integer.valueOf(var4.z), Integer.valueOf(var4.yaw), Integer.valueOf(var4.pitch)});
+				} else if(var1 != null) {
+					var1.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "Unknown command!"});
 				}
 
-				PlayerInstance var4 = this.getPlayerByName(var3[1]);
-				if(var4 == null) {
-					var1.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "No such player"});
-					return;
-				}
-
-				var1.connection.sendPacket(Packet.PLAYER_TELEPORT, new Object[]{Integer.valueOf(-1), Integer.valueOf(var4.x), Integer.valueOf(var4.y), Integer.valueOf(var4.z), Integer.valueOf(var4.yaw), Integer.valueOf(var4.pitch)});
-			} else if(var1 != null) {
-				var1.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "Unknown command!"});
 			}
-
 		}
 	}
 
@@ -649,7 +634,7 @@ public class MinecraftServer implements Runnable {
 	}
 
 	static {
-		LogFormatter var0 = new LogFormatter();
+		LogFormatter var0 = new LogFormatter();	
 		Handler[] var1 = logger.getParent().getHandlers();
 		int var2 = var1.length;
 

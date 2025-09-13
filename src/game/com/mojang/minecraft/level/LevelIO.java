@@ -47,10 +47,11 @@ public final class LevelIO {
 					var10.readFully(var6);
 					var10.close();
 					Level var11 = new Level();
-					var11.setData(var3, var5, var4, var6);
+					var11.setData(var3, this.minecraft.scuffedServer.buildLimit, var4, var6);
 					var11.name = var15;
 					var11.creator = var16;
 					var11.createTime = var7;
+					var11.liquidFlow = this.minecraft.scuffedServer.liquidFlow;
 					return var11;
 				} else {
 					ObjectInputStream var14 = new ObjectInputStream(var10);

@@ -4,7 +4,7 @@ import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
-final class LogFormatter extends Formatter {
+public final class LogFormatter extends Formatter {
 	public final String format(LogRecord var1) {
 		Level var3 = var1.getLevel();
 		String var2 = "   ";

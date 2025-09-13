@@ -204,8 +204,9 @@ public final class LevelGen {
 		this.minecraft.levelLoadUpdate("Planting..");
 		this.plantTrees(var11);
 		Level var29 = new Level();
-		var29.setData(256, 64, 256, this.blocks);
+		var29.setData(256, this.minecraft.scuffedServer.buildLimit, 256, this.blocks);
 		var29.createTime = System.currentTimeMillis();
+		var29.liquidFlow = this.minecraft.scuffedServer.liquidFlow;
 		var29.creator = var1;
 		var29.name = "A Nice World";
 		return var29;
