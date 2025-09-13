@@ -81,13 +81,13 @@ public class ScuffedServer {
 
     public boolean parseCommand(PlayerInstance player, String commandString) {
         String[] command = commandString.split(" ");
-        if (command[0].toLowerCase().equals("register") || command[0].toLowerCase().equals("reg")) {
-            if (player.scuffedPlayer.registered) {
+        if (ScuffedUtils.isLoginCommand(commandString) == 2) {
+            if (ScuffedUtils.isRegistered(player.name)) {
                 player.sendChatMessage("You are already registered! Use /login.");
                 return true;
             }
             if (command.length != 3) {
-                player.sendChatMessage("Usage: /register <password> <password>");
+                player.sendChatMessage("Usage: /" + command[0] + " <password> <password>");
                 return true;
             }
             if (!command[1].equals(command[2])) {
@@ -106,22 +106,21 @@ public class ScuffedServer {
                 player.sendChatMessage("Failed to register. Try again.");
             }
             return true;
-        } else if (command[0].toLowerCase().equals("login") || command[0].toLowerCase().equals("l")) {
+        } else if (ScuffedUtils.isLoginCommand(commandString) == 1) {
             if (player.scuffedPlayer.loggedIn) {
                 player.sendChatMessage("You are already logged in.");
                 return true;
             }
             if (command.length != 2) {
-                player.sendChatMessage("Usage: /login <password>");
+                player.sendChatMessage("Usage: /" + command[0] + " <password>");
                 return true;
             }
             try {
-                File file = new File("users", player.name + ".txt");
-                if (!file.exists()) {
+                if (!ScuffedUtils.isRegistered(player.name)) {
                     player.sendChatMessage("You are not registered! Use /register first.");
                     return true;
                 }
-                String storedHash = new String(Files.readAllBytes(file.toPath())).trim();
+                String storedHash = new String(Files.readAllBytes(new File("users", player.name + ".txt").toPath())).trim();
                 String inputHash = PasswordHasher.hash(command[1]);
                 if (storedHash.equals(inputHash)) {
                     this.login(player, true);
@@ -165,7 +164,7 @@ public class ScuffedServer {
     }
 
     public static boolean chatLoggedIn(PlayerInstance player, String message) {
-		if (!player.scuffedPlayer.loggedIn && !ScuffedUtils.isLoginCommand(message)) {
+		if (!player.scuffedPlayer.loggedIn && ScuffedUtils.isLoginCommand(message) == 0) {
 		    player.sendChatMessage("You need to log in first to chat!");
             return false;
         }

@@ -18,13 +18,13 @@ public class ScuffedPlayer {
         this.loginRemindTime = System.currentTimeMillis();
         this.loginTimeout = player.minecraft.scuffedServer.loginTimeout;
         this.loggedIn = false;
-        this.registered = ScuffedUtils.isRegistered(this.player);
+        this.registered = false;
     }
 
     public void remindLogin() {
 	    if (!this.loggedIn) {
-            if ((System.currentTimeMillis() - loginRemindTime >= 5000L) || this.firstLoginReminder) {
-                if (this.registered) {
+            if ((System.currentTimeMillis() - this.loginRemindTime >= 5000L) || this.firstLoginReminder) {
+                if (ScuffedUtils.isRegistered(this.player.name)) {
                     this.player.sendChatMessage("Please use /login <password> to log in.");
                 } else {
                     this.player.sendChatMessage("Please use /register <password> <password> to register.");

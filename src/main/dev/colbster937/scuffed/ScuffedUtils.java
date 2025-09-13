@@ -11,19 +11,22 @@ public class ScuffedUtils {
 
     public static boolean isCommand(String commandString, String checkCommand) {
         String[] command = commandString.split(" ");
+        if (!command[0].startsWith("/")) command[0] = "/" + command[0];
         return command[0].equalsIgnoreCase(checkCommand);
     }
 
-    public static boolean isLoginCommand(String commandSring) {
-        return ScuffedUtils.isCommand(commandSring, "/l") || ScuffedUtils.isCommand(commandSring, "/reg") || ScuffedUtils.isCommand(commandSring, "/login") || ScuffedUtils.isCommand(commandSring, "/register");
+    public static int isLoginCommand(String commandString) {
+        if (ScuffedUtils.isCommand(commandString, "/login") || ScuffedUtils.isCommand(commandString, "/l")) {
+            return 1;
+        } else if (ScuffedUtils.isCommand(commandString, "/register") || ScuffedUtils.isCommand(commandString, "/reg")) {
+            return 2;
+        } else {
+            return 0;
+        }
     }
 
-    public static boolean isRegistered(PlayerInstance player) {
-        File file = new File("users", player.name + ".txt");
-        if (file.exists()) {
-            return true;
-        } else {
-            return false;
-        }
+    public static boolean isRegistered(String player) {
+        File file = new File("users", player + ".txt");
+        return file.exists();
     }
 }

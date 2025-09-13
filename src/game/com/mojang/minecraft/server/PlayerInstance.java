@@ -156,7 +156,7 @@ public final class PlayerInstance {
 				}
 
 				if(var1.startsWith("/")) {
-					if(this.minecraft.admins.containsPlayer(this.name) || ScuffedUtils.isLoginCommand(var1)) {
+					if(this.minecraft.admins.containsPlayer(this.name) || ScuffedUtils.isLoginCommand(var1) > 0) {
 						this.minecraft.parseCommand(this, var1.substring(1));
 					} else {
 						this.sendPacket(Packet.CHAT_MESSAGE, new Object[]{Integer.valueOf(-1), "You\'re not a server admin!"});
